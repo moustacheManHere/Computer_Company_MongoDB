@@ -1,0 +1,18 @@
+
+# MongoDB Import Commands
+./mongoimport.exe --jsonArray --db Accessories --collection Products --file C:\dengSources\products.json
+./mongoimport.exe --jsonArray --db Accessories --collection ProductSold --file C:\dengSources\productSold.json
+./mongoimport.exe --jsonArray --db Accessories --collection ProductStock --file C:\dengSources\productStock.json
+
+# MongoDB Aggregation Queries
+# Query 1
+db.Products.aggregate([{ $lookup: { "from": "ProductSold", "localField": "PRODUCT_ID", "foreignField": "PRODUCT_ID", "as": "sold" } }, { $match: { "sold.QUANTITY": 0 } }, { $project: { _id:0, PRODUCT_ID:1, PRODUCT_NAME:1 } }])
+
+# Query 2
+db.Products.aggregate([{ $lookup: { "from": "ProductSold", "localField": "PRODUCT_ID", "foreignField": "PRODUCT_ID", "as": "sold" } }, { $match: { "sold.QUANTITY": 0 } }, { $lookup: { "from": "ProductStock", "localField": "PRODUCT_ID", "foreignField": "PRODUCT_ID", "as": "stock" } }, { $unwind: { "path": "$stock", "preserveNullAndEmptyArrays": true } }, { $group: { _id: ["$PRODUCT_ID", "$PRODUCT_NAME"], stock: { $sum: "$stock.QUANTITY" } } }]).sort({ stock: -1 })
+
+# Query 3
+db.ProductStock.aggregate([{$group:{_id:["$WAREHOUSE_NAME","$COUNTRY_NAME"]}}])
+
+# Query 4
+db.ProductStock.aggregate([{$group:{_id:["$WAREHOUSE_ID","$WAREHOUSE_NAME"],diffProducts:{$count:{}}}}])
